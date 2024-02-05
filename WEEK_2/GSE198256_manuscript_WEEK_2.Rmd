@@ -1,0 +1,537 @@
+---
+title: 'RNA-seq HOMEWORK'
+author: "Aleksandra Kurowska"
+date: "February 05, 2024"
+output: html_document
+---
+  
+```{r, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(12345)
+
+```
+
+## ## 1. Compare “Results from JCI Insight” vs “Results derived from your own analysis”
+
+## "Functional reprogramming of monocytes in patients with acute and convalescent severe COVID-19"
+Dataset: GSE198256
+Purpose: Exploring functional features of circulating monocytes in patients with acute and convalescent with COVID-19. Severe COVID-19 disease is associated with dysregulation of the myeloid compartment during
+acute infection.
+Methods: In total, 15,000–200,000 CD14hi monocytes from 11 healthy controls, 13 patients with acute COVID-19, and 20 patients who recovered from COVID-19 were isolated for bulk RNAseq.
+![](paper_GSE198256.png)
+
+
+### Load the data 
+
+```{r, message=FALSE, warning=FALSE}
+####################
+# DATA PREPARATION #
+####################
+
+# load counts table from GEO
+urld <- "https://www.ncbi.nlm.nih.gov/geo/download/?format=file&type=rnaseq_counts"
+path <- paste(urld, "acc=GSE198256", "file=GSE198256_raw_counts_GRCh38.p13_NCBI.tsv.gz", sep="&");
+tbl <- as.matrix(data.table::fread(path, header=T, colClasses="integer"), rownames=1)
+dim(tbl) #39376  x  34
+
+
+# Metadata
+#BiocManager::install("GEOquery")
+library(GEOquery)
+## https://bioconductor.org/packages/release/bioc/vignettes/GEOquery/inst/doc/GEOquery.html
+gds <- getGEO("GSE198256")
+Metadata <- pData(gds$GSE198256_series_matrix.txt.gz@phenoData)
+Metadata <- Metadata[,c("title","source_name_ch1","characteristics_ch1","characteristics_ch1.1","description","cell type:ch1","disease state:ch1")]
+
+Factors <- Metadata[,c("disease state:ch1")]
+
+
+```
+
+### Quality Control with NOISeq
+
+```{r, message=FALSE, warning=FALSE}
+## WE NEED BIOLOGICAL INFORMATION: GC, GENE LENGTH, CHROMOSOME,...
+
+# Write the names
+write.table(rownames(tbl),"gene_names.entrez.txt",
+            col.names = FALSE,row.names = FALSE,quote=F)
+
+# Additional Biological information.
+# https://www.ensembl.org/biomart/martview/7f2a95d66853c3b8aea7639401e47aba
+
+# Import the information
+annotgene <- read.csv("mart_export.txt",sep="\t",header = T) #29,761 x 6
+
+# How many genes do I get annotated?
+sum(rownames(tbl) %in% annotgene$Entrezgene) #25,898
+
+# Filter the information
+# Keep chr1 - chr22 plus sex chromosomes
+annotgene <- annotgene[annotgene$Chromosome %in% c(as.character(1:22) ,"X","Y"),]
+sum(rownames(tbl) %in% annotgene$Entrezgene) #25,872
+
+## Annotation - remove duplicates
+annotgene_filt <- annotgene[!duplicated(annotgene$Entrezgene),]
+sum(rownames(tbl) %in% annotgene$Entrezgene) #25,872
+sum(annotgene_filt$Entrezgene %in% rownames(tbl)) #25,872
+
+## Overlap between annotation and genes
+rownames(annotgene_filt) <- as.character(annotgene_filt$Entrezgene)
+sum(as.character(rownames(annotgene_filt)) %in% rownames(tbl))
+
+##  Work with the annotated genes!
+count_filt <- tbl[rownames(tbl) %in% rownames(annotgene_filt),] #25,872 included
+count_exc <- tbl[!(rownames(tbl) %in% rownames(annotgene_filt)),] #13,504 excluded
+annotgene_ord <- annotgene_filt[rownames(count_filt ),]
+
+sum(rownames(annotgene_ord)==rownames(count_filt))
+  
+######
+library(NOISeq)
+
+Factors <- data.frame(Metadata[ colnames(count_filt),c("disease state:ch1")])
+colnames(Factors)[1]<- "Group"
+
+colnames(annotgene_ord)[5] <- c("biotype")
+annotgene_ord$gene_length <- abs(annotgene_ord$end-annotgene_ord$start)
+
+length <- annotgene_ord$gene_length
+names(length) <- rownames(annotgene_ord)
+gc <- annotgene_ord$GC
+names(gc) <- rownames(annotgene_ord)
+biotype <- annotgene_ord$biotype
+names(biotype) <- rownames(annotgene_ord)
+
+levels(as.factor(Factors$Group))
+data_NOISEQ <- readData(data = count_filt,
+                        length=length,
+                        gc=gc,
+                        biotype= biotype ,
+                        chromosome = annotgene_ord[,c("Chromosome","start","end")],
+                        factors = Factors)
+
+myPCA = dat(data_NOISEQ, type = "PCA")
+explo.plot(myPCA, factor = "Group")
+
+# Example of QC report - plotting results fron Covid19: Acute Infection and Healthy samples
+QCreport(data_NOISEQ, samples = c(1, 4), factor = "Group", norm = FALSE,  file = "QC_report_GSE198256.pdf")
+
+```
+According to the PCA plot, acute samples create a separate cluster, whereas healthy samples cluster together with late recovery stage, and early recovery stage samples are somewhat dispersed. The samples need a normalization step for a better separation.   
+
+### Normalization and differential expression with DESeq 
+
+```{r, message=FALSE, warning=FALSE}
+library(DESeq2)
+# Preparing the data
+
+pDataUSE <- pData(data_NOISEQ)
+pDataUSE <- as.data.frame(as.factor(pDataUSE[,1])) #Group
+colnames(pDataUSE) <- "Group"
+pDataUSE$Group <- gsub("Covid19: Acute infection", "Covid19AI",pDataUSE$Group )
+pDataUSE$Group <- gsub("Covid19: Recovery 3Mo", "Covid193Mo",pDataUSE$Group )
+pDataUSE$Group <- gsub("Covid19: Recovery 6Mo", "Covid196Mo",pDataUSE$Group )
+rownames(pDataUSE) <- rownames(pData(data_NOISEQ))
+colnames(pDataUSE) <- "Group"
+
+# Preparing the data
+GSE198256_DESeq2 <- DESeqDataSetFromMatrix(countData = count_filt,
+                                           colData = pDataUSE,
+                                           design = ~ Group)
+
+# Filtering genes with low counts
+
+smallestGroupSize <- 6
+keep <- rowSums(counts(GSE198256_DESeq2) >= 10) >= smallestGroupSize
+GSE198256_DESeq2_F <- GSE198256_DESeq2[keep,] # 14,055 x 34
+
+
+# DIFFERENTIAL EXPRESSION
+
+GSE198256_DESeq2_F <- DESeq(GSE198256_DESeq2_F)
+GSE198256_res <- results(GSE198256_DESeq2_F)
+
+
+# Understanind the DE results
+# plot MA
+
+plotMA(GSE198256_res, ylim=c(-2,2))
+
+# Shrinkage 
+resultsNames(GSE198256_DESeq2_F)
+res_lfcShrink <- lfcShrink(GSE198256_DESeq2_F, coef =c("Group_Healthy_vs_Covid193Mo"))
+
+plotMA(res_lfcShrink, ylim=c(-2,2))
+
+
+
+vsd <- vst(GSE198256_DESeq2_F, blind=FALSE)
+head(assay(vsd), 3)
+
+# Define questions
+res_AI_vs_H <- results(GSE198256_DESeq2_F, contrast=c("Group","Covid19AI", "Healthy"))
+res_3Mo_vs_H <- results(GSE198256_DESeq2_F, contrast=c("Group","Covid193Mo","Healthy"))
+res_6Mo_vs_H <- results(GSE198256_DESeq2_F, contrast=c("Group","Covid196Mo","Healthy"))
+res_6Mo_vs_3Mo <- results(GSE198256_DESeq2_F, contrast=c("Group","Covid196Mo","Covid193Mo"))
+res_3Mo_vs_AI <- results(GSE198256_DESeq2_F, contrast=c("Group","Covid193Mo","Covid19AI"))
+res_6Mo_vs_AI <- results(GSE198256_DESeq2_F, contrast=c("Group","Covid196Mo","Covid193Mo"))
+
+
+# Find significant genes
+res_AI_vs_H <- res_AI_vs_H[!is.na(res_AI_vs_H$padj),]
+sig_AI_vs_H <- res_AI_vs_H[abs(res_AI_vs_H$log2FoldChange) > 1 & res_AI_vs_H$padj < 0.05,]
+
+res_3Mo_vs_H <- res_3Mo_vs_H[!is.na(res_3Mo_vs_H$padj),]
+sig_3Mo_vs_H <- res_3Mo_vs_H[abs(res_3Mo_vs_H$log2FoldChange) > 1 & res_3Mo_vs_H$padj < 0.05,]
+
+res_6Mo_vs_H <- res_6Mo_vs_H[!is.na(res_6Mo_vs_H$padj),]
+sig_6Mo_vs_H <- res_6Mo_vs_H[abs(res_6Mo_vs_H$log2FoldChange) > 1 & res_6Mo_vs_H$padj < 0.05,]
+
+
+
+```
+
+
+### Visualisation 
+
+```{r, message=FALSE, warning=FALSE}
+
+# Common differentially expressed genes
+venn <- list("Acute" = c(rownames(sig_AI_vs_H)), "Early" = c(rownames(sig_3Mo_vs_H)), "Late" = c(rownames(sig_6Mo_vs_H)))
+
+library(ggVennDiagram)
+# Generate the Venn diagram
+#png("venn.png", height = 1400, width = 2000, res = 300)
+ggVennDiagram(venn, cathegory = c("Acute", "Early", "Late"))
+#dev.off()
+
+
+# PCA
+pca <- plotPCA(vsd, intgroup=c("Group"))
+
+my_colors <- c("black", "orange",  "#1F78B4",  "#33A02C")
+names(my_colors) <- c("Healthy","Covid19AI" ,"Covid193Mo" , "Covid196Mo")
+
+percentVar <- round(100 * attr(pca, "percentVar"))
+
+library(ggplot2)
+# Create the plot
+
+pcaData <- pca$data
+#png("PCA.png", height = 1400, width = 2000, res = 300)
+ggplot(pcaData, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point(size=3) +
+  scale_color_manual(values=my_colors) +
+  xlab(pca$labels$x) +
+  ylab(pca$labels$y) +
+  ggtitle("PCA Plot") +
+  theme_bw()
+#dev.off()
+
+library("pheatmap")
+# Get genes names
+gene_anno <- read.table("mart_export-2.txt", sep = "\t")
+colnames(gene_anno) <- gene_anno[1,]
+gene_anno <- gene_anno[-1,]
+gene_anno <- gene_anno[!duplicated(gene_anno$`NCBI gene (formerly Entrezgene) ID`),]
+rownames(gene_anno) <- gene_anno$`NCBI gene (formerly Entrezgene) ID`
+
+
+DE_genes <- unique(c(rownames(sig_3Mo_vs_H[order(sig_3Mo_vs_H$padj, decreasing = F),])[1:50], rownames(sig_6Mo_vs_H), rownames(sig_AI_vs_H[order(sig_AI_vs_H$padj, decreasing = F),])[1:50]))
+
+
+genes <- c("PPARG", "FOSL1", "MAFB", "MAFF", "FOXO3", "JUNB", "ATF3", "NFKB2")
+ids <- gene_anno[gene_anno$`Gene name`%in%genes,]$`NCBI gene (formerly Entrezgene) ID`
+DE_genes <- intersect(DE_genes, ids)
+length(DE_genes)
+select <- rownames(counts(GSE198256_DESeq2_F,normalized=TRUE)[DE_genes,])
+
+df <- as.data.frame(colData(GSE198256_DESeq2_F)[,c("Group")])
+colnames(df) <- "Group"
+
+my_colors <- c("black", "orange",  "#1F78B4",  "#33A02C")
+names(my_colors) <- c("Healthy","Covid19AI" ,"Covid193Mo" , "Covid196Mo")
+
+# Define your own colors
+group_df = data.frame(vsd$Group)
+rownames(group_df) <- colnames(vsd)
+colnames(group_df) <- "Group"
+
+annotation_df <- data.frame(GroupColor = my_colors[vsd$Group])
+
+my_colors <- list(my_colors)
+names(my_colors) <- "Group"
+
+toPlot <- assay(vsd)[select,]
+rownames(toPlot) <- gene_anno[select,]$`Gene name`
+
+labs.row <- rownames(toPlot)
+
+#/ Turn off all but the chosen genes
+genes <- c("PPARG", "FOSL1", "MAFB", "MAFF", "ATF4", "FOXO3", "JUNB", "ATF3", "NFKB2")
+labs.row[which(!labs.row%in%genes)] <- ""
+
+
+library(pheatmap)
+#png("heatmap.png", height = 3000, width = 3000, res = 300)
+pheatmap(toPlot, cluster_rows=T, show_rownames=T, show_colnames = F,
+         cluster_cols=F, annotation_col = group_df,annotation_colors = my_colors,
+         labels_row = labs.row, fontsize_row = 8)
+#dev.off()
+
+
+```
+
+# Venn diagram
+As stated in the paper, only a few de-regulated genes in the acute stage were also found to be modulated in the recovery groups, indicating that the transcriptomic program induced by the acute infection is not persistent. In our results, we can see that the groups share of aprox. 12% of differentially expressed genes from Acute vs Healthy comparison. See the venn diagram above.
+
+# PCA
+In the paper they observed a clear separation between samples from acute and healthy controls upon principal component analysis. COVID-19 patients from early recovery stage formed a distinct cluster, while late recovery stage patients were found to be embedded within the control group. After re-analyzing the data on my own, we can observe a very similar samples separation. Moreover, the percentages of variance explained for PC1 and PC2 are almost the same as in the original analysis. See the figure above.
+
+# Heatmap 
+# Acute samples 
+In the paper they have identified 339 statistically differentially expressed genes in the acute samples as compared with controls, including down-regulation of **JUNB**, **ATF3**, **NFkB2**.
+# Early recovery stage
+In patients in the early recovery period, they have identified 521 differentially expressed genes as compared with controls, including up-regulation of important intracellular immunomodulatory proteins and transcription factors: **PPARG**, **FOSL1**, **MAFB**, **ATF4**, **MAFF**, **FOXO3**.
+
+In our own analysis of the data, we identified much more differentially expressed genes, using the same cutoff thersholds as in the paper (a fold change [FC] > 2 and a FDR < 0.05) I have found 1002 statistically differentially expressed genes in acute samples compared with controls. The result is almost 3x higher than presented in the paper. This difference may be originated due to specific parameters used in the analysis. However, the authors haven't precisely specified the protocol, they have followed. Whereas, I used the default settings. Nonetheless, consistent with the publication, we observe decreased expression of genes related to key immune pathways, such as **JUNB**, **ATF3**, **NFkB2**.
+Moreover, for early stage samples we identify 815 differentially expressed genes, which is much more compared with the paper. However, consistent with the publication, we see similar up-regulation of **PPARG**, **FOSL1**, **MAFB**, **MAFF**, **FOXO3**.
+
+
+### Functional enrichment with clusterProfiler 
+
+```{r, message=FALSE, warning=FALSE}
+
+library(org.Hs.eg.db)
+keytypes(org.Hs.eg.db)
+
+# If we want to shift annotations:
+ENSEMBL_vector <- mapIds(
+  # Replace with annotation package for the organism relevant to your data
+  org.Hs.eg.db,
+  # The vector of gene identifiers we want to map
+  keys = rownames(count_filt),
+  # Replace with the type of gene identifiers in your data
+  keytype = "ENTREZID",
+  # Replace with the type of gene identifiers you would like to map to
+  column = "ENSEMBL",
+  # In the case of 1:many mappings, return the
+  # first one. This is default behavior!
+  multiVals = "first"
+)
+
+# We would like a data frame we can join to the differential expression stats
+gene_key_df <- data.frame(
+  ensembl_id = ENSEMBL_vector,
+  entrez_id = names(ENSEMBL_vector),
+  stringsAsFactors = FALSE
+) %>%
+  # If an Ensembl gene identifier doesn't map to a gene symbol, drop that
+  # from the data frame
+  dplyr::filter(!is.na(ensembl_id))
+
+
+```
+
+## Lets conduct GSEA.
+
+```{r run GSEA}
+
+# Differential genes between acute stage and healthy 
+# Step 1: determine genes of interest 
+
+# Step 2: Determine gene sets.
+
+library(msigdbr)
+msigdbr_species()
+hs_msigdb_df <- msigdbr(species = "Homo sapiens")
+
+
+hs_kegg_df <- hs_msigdb_df %>%
+  dplyr::filter(
+    gs_cat == "C2", # This is to filter only to the C2 curated gene sets
+    gs_subcat == "CP:KEGG" # This is because we only want KEGG pathways
+  )
+
+# Step 3: conduct GSEA
+
+# Prepare an ordered list of genes based on log2FC
+
+list_ordered <- abs(res_AI_vs_H[order(abs(res_AI_vs_H$log2FoldChange), decreasing = T),]$log2FoldChange)
+names(list_ordered) <- rownames(res_AI_vs_H[order(abs(res_AI_vs_H$log2FoldChange), decreasing = T),])
+
+library(clusterProfiler)
+gsea_results <- GSEA(
+  geneList = list_ordered, # Ordered ranked gene list
+  minGSSize = 25, # Minimum gene set size
+  maxGSSize = 500, # Maximum gene set set
+  pvalueCutoff = 1, # p-value cutoff
+  eps = 0, # Boundary for calculating the p value
+  seed = TRUE, # Set seed to make results reproducible
+  pAdjustMethod = "BH", # Benjamini-Hochberg correction
+  TERM2GENE = dplyr::select(
+    hs_kegg_df,
+    gs_name,
+    human_entrez_gene
+  )
+)
+
+
+
+# Step 5: Visualize / explore
+
+
+head(gsea_results@result)
+
+gsea_result_df <- data.frame(gsea_results@result)
+gsea_result_df %>%
+  # This returns the 3 rows with the largest NES values
+  dplyr::slice_max(NES, n = 3)
+
+most_positive_nes_plot <- enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "KEGG_GRAFT_VERSUS_HOST_DISEASE",
+  title = "KEGG_GRAFT_VERSUS_HOST_DISEASE",
+  color.line = "#0d76ff"
+)
+most_positive_nes_plot
+
+gsea_result_df %>%
+  # Return the 3 rows with the smallest (most negative) NES values
+  dplyr::slice_min(NES, n = 3)
+
+most_negative_nes_plot <- enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "KEGG_AMINOACYL_TRNA_BIOSYNTHESIS",
+  title = "KEGG_AMINOACYL_TRNA_BIOSYNTHESIS",
+  color.line = "#0d76ff"
+)
+most_negative_nes_plot
+
+# Save the results
+gsea_AI_vs_H <- gsea_results
+
+
+
+# Differential genes between early stage and healthy 
+# Step 3: conduct GSEA
+
+# Prepare an ordered list of genes based on log2FC
+
+list_ordered <- abs(res_3Mo_vs_H[order(abs(res_3Mo_vs_H$log2FoldChange), decreasing = T),]$log2FoldChange)
+names(list_ordered) <- rownames(res_3Mo_vs_H[order(abs(res_3Mo_vs_H$log2FoldChange), decreasing = T),])
+
+library(clusterProfiler)
+gsea_results <- GSEA(
+  geneList = list_ordered, # Ordered ranked gene list
+  minGSSize = 25, # Minimum gene set size
+  maxGSSize = 500, # Maximum gene set set
+  pvalueCutoff = 1, # p-value cutoff
+  eps = 0, # Boundary for calculating the p value
+  seed = TRUE, # Set seed to make results reproducible
+  pAdjustMethod = "BH", # Benjamini-Hochberg correction
+  TERM2GENE = dplyr::select(
+    hs_kegg_df,
+    gs_name,
+    human_entrez_gene
+  )
+)
+
+
+
+# Step 5: Visualize / explore
+
+
+head(gsea_results@result)
+
+gsea_result_df <- data.frame(gsea_results@result)
+gsea_result_df %>%
+  # This returns the 3 rows with the largest NES values
+  dplyr::slice_max(NES, n = 3)
+
+most_positive_nes_plot <- enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "KEGG_CYTOKINE_CYTOKINE_RECEPTOR_INTERACTION",
+  title = "KEGG_CYTOKINE_CYTOKINE_RECEPTOR_INTERACTION",
+  color.line = "#0d76ff"
+)
+most_positive_nes_plot
+
+gsea_result_df %>%
+  # Return the 3 rows with the smallest (most negative) NES values
+  dplyr::slice_min(NES, n = 3)
+
+most_negative_nes_plot <- enrichplot::gseaplot(
+  gsea_results,
+  geneSetID = "KEGG_HUNTINGTONS_DISEASE",
+  title = "KEGG_HUNTINGTONS_DISEASE",
+  color.line = "#0d76ff"
+)
+most_negative_nes_plot
+
+# Save the results
+gsea_3Mo_vs_H <- gsea_results
+
+path <- "/Users/kurowsaa/OneDrive/Documents/KAUST/Bioinfo_pipelines_course/WEEK_2"
+
+write.csv(gsea_AI_vs_H , file = paste0(path, "/GSEA_AIvsH.csv"), row.names = FALSE)
+write.csv(gsea_3Mo_vs_H , file = paste0(path, "/GSEA_3MovsH.csv"), row.names = FALSE)
+
+```
+
+## Lets conduct GeneSetCluster.
+
+```{r run GeneSetCluster}
+library(GeneSetCluster)
+path <- "/Users/kurowsaa/OneDrive/Documents/KAUST/Bioinfo_pipelines_course/WEEK_2"
+GSEA.files <- paste0(path, "/", list.files(path, pattern = ".csv"))
+
+# Load the data and create Pathway object
+# Automatically for GSEA, GREAT or IPA
+GSEA.Object1 <- LoadGeneSets(file_location = GSEA.files, 
+                              groupnames= c("GSEA_3MovsH", "GSEA_AIvsH"), # names of the groups
+                              P.cutoff = 0.05, # cut off the p.adjust
+                              Mol.cutoff = 15, # minimum number of genes per pathway
+                              Source = "GSEA", # the analysis (GSEA, GREAT or IPA)
+                              structure = "ENTREZID", # Gene type (SYMBOL, ENTREZID, ENSEMBLID)
+                              Organism = "org.Hs.eg.db", # database: Homo Sapiens or Mus musculus
+                              seperator = "/") # the separator used for listing genes
+                                  Source = "GSEA", organism = "org.Hs.eg.db")
+
+GSEA.Object2 <- CombineGeneSets(Object = GSEA.Object1,
+                                combineMethod = "Standard", threads = 8)
+
+OptimalGeneSets(Object = GSEA.Object2, 
+                uniquePathway = FALSE, # consider all the pathways (also repeated) or the unique pathways
+                method = "silhouette", max_cluster= 15, cluster_method = "kmeans", main= "Kmeans for 24 clusters")
+
+OptimalGeneSets(Object = GSEA.Object2, 
+                uniquePathway = TRUE, # consider all the pathways (also repeated) or the unique pathways
+                method = "silhouette", max_cluster= 10, cluster_method = "kmeans", main= "Kmeans for 24 clusters")
+
+# in both cases the optimal cluster is 2
+
+GSEA.Object3 <- ClusterGeneSets(Object = GSEA.Object2, 
+                                clusters = 2, # consider all the pathways (also repeated) or the unique pathways
+                                method = "Hierarchical", # Hierarchical clustering or kmeans
+                                order = "cluster",
+                                molecular.signature = "All")
+
+
+# plot results for both all pathways and unique pathways
+plotnounique <- PlotGeneSets(GSEA.Object3, 
+                             uniquePathways = FALSE, 
+                             wordcloud = FALSE, # wordcloud only supported for GO terms
+                             doORA = T) # do ora per cluster
+
+plotunique <- PlotGeneSets(GSEA.Object3, 
+                           uniquePathways = TRUE, 
+                           wordcloud = FALSE, # wordcloud only supported for GO terms
+                           doORA = T) # do ora per cluster
+
+
+
+```
+
