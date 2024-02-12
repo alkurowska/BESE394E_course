@@ -15,7 +15,6 @@ set.seed(12345)
 
 ## Human Myeloid Differentiation based on Monocytes
 
-## Placental dysfunction influences fetal monocyte subpopulation gene expression in preterm birth
 Dataset RNA-seq: GSE79044
 Dataset ATAC-seq: GSE79019
 Purpose: Identify differences in chromatin regions profiles in monocytes at 3 time points of differentiation: 3h, 6h, 12h. Investigate if the RNA-seq expression data follows the same trend corresponding to differential peaks.
