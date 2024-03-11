@@ -1,5 +1,3 @@
-options(width = 210)
-
 # Load necessary libraries for single-cell analysis, motif analysis, and plotting
 library(Seurat)
 library(TFBSTools)
@@ -476,7 +474,7 @@ saveRDS(mouse_brain, './mouse_brain_multiome_RNA_Activity.rds')
 # Use the JASPAR database to obtain the motifs.
 
 
-# Analize all of the 4 cell lines in a loop
+# Analyze all of the 4 cell lines in a loop
 cell_lines <- c('Pvalb', 'Lamp5','Endo', 'OPC')
 
 for (i in 1:length(cell_lines)) {
