@@ -13,8 +13,8 @@ Creating pseudo-bulk profiles from scRNA-Seq data enables the generation bulk-li
 
 1. Find candidate enhancers from differentially accessible chromatin regions (DARs) in bulk `🟡ATAC data` across B-cell precursor states: HSC - CLP, CLP - porB, proB - preB, preB - Immature B. 
 2. Find deregulated genes from differentially expressed genes (DEGs) in pseudobulk `🔵scRNA-seq data` across B-cell precursor states: HSC - CLP, CLP - porB, proB - preB, preB - Immature B. 
-3. Discover potential Transcription Factors bindning sites (TFBSs) in candidate enhancers through motif enrichment analysis in identified DARs.
-4. Quantify the importance of both Transcription Factors and enhancer candidates for target genes and infer the direction of regulation (activating/repressing) using **linear correlations** of log2FC values from differential analysis across precursor states. .
+3. Discover potential transcription factors bindning sites (TFBSs) in candidate enhancers through motif enrichment analysis in identified DARs.
+4. Quantify the importance of both transcription factors (TFs) and enhancer candidates for target genes and infer the direction of regulation (activating/repressing) using **linear correlations** of log2FC values from differential analysis across precursor states.
 
 ### Challenges and Considerations
 Data resolution and quality: The integration of single-cell and bulk data requires careful consideration of data resolution and quality differences. Single-cell data provides high-resolution insights, but can be noisy, whereas bulk data offers a more stable signal, but at a lower resolution.
