@@ -180,11 +180,8 @@ Goals:
 2. Define consensus peaks for each cell type.
 2. Determine transcription factors binding enrichment in each of the cell types.
 
-
-# BULK ATAC
-### 1. Peak Calling `MACS2`
+#### 1. Peak Calling `MACS2`
 ```
-
 macs2 callpeak \
 --treatment "${input_file}" \
 --name "${input_file%.bam}" \
@@ -194,13 +191,10 @@ macs2 callpeak \
 --qvalue 0.05 \
 --outdir "path" \
 
-
 ```
 
-
-### 2. Peak Consensus `R/GenomicRanges`
+#### 2. Peak Consensus `R/GenomicRanges`
 ```
-
 # bed files 
 bed_files <- file.path(raw_data_folder, 
                        dir(raw_data_folder, pattern = '*.bed'))
@@ -243,10 +237,8 @@ length(reference_bed)
 
 ```
 
-### 3. Counts `featureCounts`
-
+#### 3. Counts `featureCounts`
 ```
-
 module load subread
 
 featureCounts -p --countReadPairs -F SAF \
@@ -257,9 +249,7 @@ BAM1.bam \
 BAM2.bam \
 ...
 ```
-### 4. Differential Accesibility `R/DESeq2`
-
-
+#### 4. Differential Accesibility `R/DESeq2`
 ```
 # 1 load count matrix
 count_matrix <- read.csv(counts_path)
@@ -343,11 +333,9 @@ plotDistToTSS(signPeakAnno)
 
 anno_df <- as.data.frame(signPeakAnno)## convert to dataframe 
 anno_df
-
-
 ```
 
-### 5. Motif Analysis `HOMER`
+#### 5. Motif Analysis `HOMER`
 ```
 module load HOMER
 findMotifsGenome.pl diff_peaks.txt mm10 ~/motifsFILE -size given -nomotif
