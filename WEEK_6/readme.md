@@ -4,6 +4,9 @@
 This document presents an integrative analysis workflow of single-cell RNA-Seq (scRNA-Seq) and bulk Assay for Transposase-Accessible Chromatin using sequencing (ATAC-Seq) data to investigate B-cell differentiation.
 Integrating scRNA-Seq and ATAC-Seq data is an exciting area of research, offering insights into the transcriptional regulation and gene expression profiles at a resolution unmatched by either method alone.
 
+### Question
+Revealing the **regulatory mechanisms** underlying **B-cell differentiation**, and understanding the relationship between chromatin accessibility and gene expression in different B-cell types throughout their development?
+
 ### Strategy 
 Creating pseudo-bulk profiles from scRNA-Seq data enables the generation bulk-like samples based on cell types or clusters. Such aggregated transcriptomic data can then be directly compared with bulk ATAC-seq data to facilitate the identification of cell type-specific regulatory elements and their corresponding gene expression profiles. A potential downstream analysis step is to identify correlations between gene expression levels from scRNA-seq data and accessibility peaks from bulk ATAC-seq data. High correlation coefficients may indicate regulatory relationships, suggesting that accessible chromatin regions could regulate the expression of proximal genes.
 
