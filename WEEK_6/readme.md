@@ -5,13 +5,13 @@ This document presents an integrative analysis workflow of single-cell RNA-Seq (
 Integrating scRNA-Seq and ATAC-Seq data is an exciting area of research, offering insights into the transcriptional regulation and gene expression profiles at a resolution unmatched by either method alone.
 
 ### Question
-Revealing the **regulatory mechanisms** underlying **B-cell differentiation**, and understanding the relationship between chromatin accessibility and gene expression in different B-cell types throughout their development?
+Revealing the **regulatory mechanisms** underlying **B-cell differentiation**, and understanding the relationship between chromatin accessibility and gene expression in different B-cell types throughout their development.
 
 ### Strategy 
 Creating pseudo-bulk profiles from scRNA-Seq data enables the generation bulk-like samples based on cell types or clusters. Such aggregated transcriptomic data can then be directly compared with bulk ATAC-seq data to facilitate the identification of cell type-specific regulatory elements and their corresponding gene expression profiles. A potential downstream analysis step is to identify correlations between gene expression levels from scRNA-seq data and accessibility peaks from bulk ATAC-seq data. High correlation coefficients may indicate regulatory relationships, suggesting that accessible chromatin regions could regulate the expression of proximal genes.
 
 ### Challenges and Considerations
-Data Resolution and Quality: The integration of single-cell and bulk data requires careful consideration of data resolution and quality differences. Single-cell data provides high-resolution insights, but can be noisy, whereas bulk data offers a more stable signal, but at a lower resolution.
+Data resolution and quality: The integration of single-cell and bulk data requires careful consideration of data resolution and quality differences. Single-cell data provides high-resolution insights, but can be noisy, whereas bulk data offers a more stable signal, but at a lower resolution.
 
 ## Dataset 
 Public scRNA-Seq and bulk ATAC-seq data of B cell differentiation can be obtained from the European Genome-phenome Archive. 
@@ -193,7 +193,6 @@ macs2 callpeak \
 --keep-dup all \
 --qvalue 0.05 \
 --outdir "path" \
-
 ```
 
 #### 2. Peak Consensus `R/GenomicRanges`
@@ -237,7 +236,6 @@ start(reference_bed) <- reduced_start
 end(reference_bed) <- reduced_end
 reference_bed
 length(reference_bed)
-
 ```
 
 #### 3. Counts `featureCounts`
@@ -250,8 +248,8 @@ featureCounts -p --countReadPairs -F SAF \
 -o merged_peaks.counts \
 BAM1.bam \
 BAM2.bam \
-...
 ```
+
 #### 4. Differential Accesibility `R/DESeq2`
 ```
 # 1 load count matrix
@@ -346,14 +344,13 @@ findMotifsGenome.pl diff_peaks.txt mm10 ~/motifsFILE -size given -nomotif
 
 ### Integration
 Integration strategy for `🔵scRNA-seq data` and `🟡ATAC data` to facilitate the identification of cell type-specific regulatory elements and their corresponding gene expression profiles throughout the B cell differentiation process. 
-Goals:
-1. **Correlation analysis** between gene expression levels from `🔵scRNA-seq data` and accessibility peaks from bulk `🟡ATAC data`.
+
+AIM: **Correlation analysis** between gene expression levels from `🔵scRNA-seq data` and accessibility peaks from bulk `🟡ATAC data`.
 High correlation coefficients can suggest regulatory relationships where accessible chromatin regions potentially regulate the expression of nearby genes. 
 
-Goal: Understanding the `🟡🔵Integrated data`.
-
-
-Transformation of `🔵scRNA-seq data` to investigate B-cell differentiation in the setting of the `🟡🔵Integrated data`. 
+**Understanding the `🟡🔵Integrated data`**
+            
+Transformation of `🔵scRNA-seq data` to investigate B-cell differentiation in the settings of the `🟡🔵Integrated data`. 
 Goals:
 1. Prepare aggregated `🔵scRNA-seq data` for pseudobulk differential expression (DE) analysis.
 2. Utilize the DESeq2 tool to perform pseudobulk differential expression analysis on a specific cell type cluster.
@@ -367,24 +364,18 @@ After identification of the cell type identities of the `🔵scRNA-seq data` clu
 
 # Extract unique names of clusters (= levels of cluster_id factor variable)
 cluster_names <- levels(colData(sc_data)$cluster_id)
-cluster_names
 
 # Total number of clusters
 length(cluster_names)
 
-# Create a new column in colData for pseudobulk group assignment
-colData(sc_data)$pseudobulk_group <- NA
+# Extract unique names of samples (= levels of sample_id factor variable)
+sample_names <- levels(colData(sce)$sample_id)
 
-# Assign cells to one of three pseudobulk samples within each cluster
-# For reproducibility
-for (cluster_name in cluster_names) {
-  cells_in_cluster <- which(colData(sc_data)$cluster_id == cluster_name)
-  # Randomly assign cells to one of three groups
-  colData(sc_data)$pseudobulk_group[cells_in_cluster] <- sample(1:3, length(cells_in_cluster), replace = TRUE)
-}
+# Total number of samples
+length(sample_names)
 
-# Subset metadata to include only the variables you want to aggregate across
-groups <- colData(sc_data)[, c("cluster_id"]
+# Subset metadata to include only the variables you want to aggregate across (here, we want to aggregate by sample and by cluster)
+groups <- colData(sce)[, c("cluster_id", "sample_id")]
 head(groups)
 
 # Aggregate across cluster groups
@@ -407,7 +398,7 @@ counts_ls <- list()
 for (i in 1:length(cluster_names)) {
 
   ## Extract indexes of columns in the global matrix that match a given cluster
-  column_idx <- which(colnames(aggr_counts) == cluster_names[i])
+  column_idx <- which(tstrsplit(colnames(aggr_counts), "_")[[1]] == cluster_names[i])
   
   ## Store corresponding sub-matrix as one element of a list
   counts_ls[[i]] <- aggr_counts[, column_idx]
@@ -422,8 +413,52 @@ str(counts_ls)
 
 #### 2. Differential expression with DESeq2
 ```
+# Select cell types of interest
+cluster_names
+
+# Extract sample-level variables
+metadata <- colData(sc_data) %>% 
+  as.data.frame() %>% 
+  dplyr::select(group_id, sample_id)
+
+dim(metadata)
+head(metadata)
+
+# Exclude duplicated rows
+metadata <- metadata[!duplicated(metadata), ]
+
+# Rename rows
+rownames(metadata) <- metadata$sample_id
+head(metadata)
+
 # Select cell type of interest
 cluster_names
 
 # Double-check that both lists have same names
 all(names(counts_ls) == names(metadata_ls))
+
+# Create DESeq2 object        
+dds <- DESeqDataSetFromMatrix(counts_ls, 
+                              colData = metadata, 
+                              design = ~ cluster_id)
+
+# Filter
+keep <- rowSums(counts(dds)) >= 10 ## keep only rows with at least 10 genes
+dds <- dds[keep,]
+
+# run DESeq2
+dds <- DESeq(dds)
+
+# Check coeficcients for the comparison 
+resultsNames(dds)
+
+# Results object
+res <- results(dds, name= "condition_CLP_vs_HSC")
+res ## genes that are differentially expressed in b cells between samples
+res
+filtered_res <- res[!is.na(res$log2FoldChange) & !is.na(res$pvalue) &
+                      (res$log2FoldChange < -1 | res$log2FoldChange > 1) &
+                      res$padj < 0.05, ]
+
+filtered_res
+
