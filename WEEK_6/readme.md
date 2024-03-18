@@ -20,9 +20,8 @@ Creating pseudo-bulk profiles from scRNA-Seq data enables the generation bulk-li
 Data resolution and quality: The integration of single-cell and bulk data requires careful consideration of data resolution and quality differences. Single-cell data provides high-resolution insights, but can be noisy, whereas bulk data offers a more stable signal, but at a lower resolution.
 
 ## Dataset 
-Human Cell Atlas for 8 scRNA-Seq samples of B-lymphoid cell states: https://explore.data.humancellatlas.org/projects/cc95ff89-2e68-4a08-a234-480eca21ce79
-Public bulk ATAC-seq data of B cell differentiation can be obtained from the European Genome-phenome Archive. 
-Human data for chromatin accessibility (ATAC-Seq) in B-cell precursors: HSC, CLP, pro-B, pre-B, Immature B: EGAD00001010908. 
+Human Cell Atlas of 8 scRNA-Seq samples of B-lymphoid cell states: https://explore.data.humancellatlas.org/projects/cc95ff89-2e68-4a08-a234-480eca21ce79
+Public bulk ATAC-seq data of B cell differentiation obtained from the European Genome-phenome Archive in B-cell precursors: HSC, CLP, pro-B, pre-B, Immature B: EGAD00001010908. 
 
 ## Workflow
 ### Analysis design
