@@ -15,7 +15,7 @@ Data resolution and quality: The integration of single-cell and bulk data requir
 
 ## Dataset 
 Public scRNA-Seq and bulk ATAC-seq data of B cell differentiation can be obtained from the European Genome-phenome Archive. 
-Human data for transcriptome (scRNA-Seq) in CD34+ B cell precursors: EGAD00001010907.
+Human data for transcriptome (scRNA-Seq) in CD34+ B cell precursors: EGAS00001007305, 
 Human data for chromatin accessibility (ATAC-Seq) in B-cell precursors: HSC, CLP, pro-B, pre-B, Immature B: EGAD00001010908. 
 
 ## Workflow
@@ -465,7 +465,7 @@ filtered_res
 
 #### 3. GRN Inference - correlation of pseudobulk `🔵scRNA-seq data` and bulk `🟡ATAC data`
 Goals:
-1. Correlate differential expressed genes and differential accessible chromatin regions across B cell transitions
+1. Correlate differential expressed genes and differential accessible chromatin regions across B cell transitions.
 2. Identify enriched transcription factors (TFs).
 
 ```
