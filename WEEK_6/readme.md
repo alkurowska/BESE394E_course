@@ -1,5 +1,5 @@
 
-# W6 Integration
+# W6 Integration of scRNA-Seq and bulk ATAC-Seq
 ### Assignment Group 3:
 This document presents an integrative analysis workflow of single-cell RNA-Seq (scRNA-Seq) and bulk Assay for Transposase-Accessible Chromatin using sequencing (ATAC-Seq) data to investigate B-cell differentiation.
 Integrating scRNA-Seq and ATAC-Seq data is an exciting area of research, offering insights into the transcriptional regulation and gene expression profiles at a resolution unmatched by either method alone.
@@ -11,8 +11,8 @@ Revealing the **regulatory mechanisms** underlying **B-cell differentiation**, a
 ## Strategy 
 Creating pseudo-bulk profiles from scRNA-Seq data enables the generation bulk-like samples based on cell types or clusters. Such aggregated transcriptomic data can then be directly compared with bulk ATAC-seq data to facilitate the identification of cell type-specific regulatory elements and their corresponding gene expression profiles. A potential downstream analysis step is to identify correlations between gene expression levels from scRNA-seq data and accessibility peaks from bulk ATAC-seq data. High correlation coefficients may indicate regulatory relationships, suggesting that accessible chromatin regions could regulate the expression of proximal genes.
 
-1. Find candidate enhancers from differentially accessible chromatin regions (DARs) in bulk `🟡ATAC data` across B-cell precursor states: HSC - CLP, CLP - porB, proB - preB, preB - Immature B. 
-2. Find deregulated genes from differentially expressed genes (DEGs) in pseudobulk `🔵scRNA-seq data` across B-cell precursor states: HSC - CLP, CLP - porB, proB - preB, preB - Immature B. 
+1. Find candidate enhancers from differentially accessible chromatin regions (DARs) in bulk `🟡ATAC data` across B-cell precursor states: HSC - CLP, CLP - proB, proB - preB, preB - Immature B. 
+2. Find deregulated genes from differentially expressed genes (DEGs) in pseudobulk `🔵scRNA-seq data` across B-cell precursor states: HSC - CLP, CLP - proB, proB - preB, preB - Immature B. 
 3. Discover potential transcription factors bindning sites (TFBSs) in candidate enhancers through motif enrichment analysis in identified DARs.
 4. Quantify the importance of both transcription factors (TFs) and enhancer candidates for target genes and infer the direction of regulation (activating/repressing) using **linear correlations** of log2FC values from differential analysis across precursor states.
 
@@ -21,7 +21,7 @@ Data resolution and quality: The integration of single-cell and bulk data requir
 
 ## Dataset 
 Human Cell Atlas of 8 scRNA-Seq samples of B-lymphoid cell states: https://explore.data.humancellatlas.org/projects/cc95ff89-2e68-4a08-a234-480eca21ce79
-Public bulk ATAC-seq data of B cell differentiation obtained from the European Genome-phenome Archive in B-cell precursors: HSC, CLP, pro-B, pre-B, Immature B: EGAD00001010908. 
+Public bulk ATAC-seq data of B cell differentiation obtained from the European Genome-phenome Archive in B-cell precursors: HSC, CLP, pro-B, pre-B, Immature B: https://ega-archive.org/search/EGAD00001010908 
 
 ## Workflow
 ### Analysis design
