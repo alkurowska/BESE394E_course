@@ -5,17 +5,23 @@ This document presents an integrative analysis workflow of single-cell RNA-Seq (
 Integrating scRNA-Seq and ATAC-Seq data is an exciting area of research, offering insights into the transcriptional regulation and gene expression profiles at a resolution unmatched by either method alone.
 
 ### Question
+Unravelling human **hematopoietic** progenitor cell **diversity** through association with **regulatory factors**. 
 Revealing the **regulatory mechanisms** underlying **B-cell differentiation**, and understanding the relationship between chromatin accessibility and gene expression in different B-cell types throughout their development.
 
 ### Strategy 
 Creating pseudo-bulk profiles from scRNA-Seq data enables the generation bulk-like samples based on cell types or clusters. Such aggregated transcriptomic data can then be directly compared with bulk ATAC-seq data to facilitate the identification of cell type-specific regulatory elements and their corresponding gene expression profiles. A potential downstream analysis step is to identify correlations between gene expression levels from scRNA-seq data and accessibility peaks from bulk ATAC-seq data. High correlation coefficients may indicate regulatory relationships, suggesting that accessible chromatin regions could regulate the expression of proximal genes.
 
+1. Find candidate enhancers from differentially accessible chromatin regions (DARs) in bulk `🟡ATAC data` across B-cell precursor states: HSC - CLP, CLP - porB, proB - preB, preB - Immature B. 
+2. Find deregulated genes from differentially expressed genes (DEGs) in pseudobulk `🔵scRNA-seq data` across B-cell precursor states: HSC - CLP, CLP - porB, proB - preB, preB - Immature B. 
+3. Discover potential Transcription Factors bindning sites (TFBSs) in candidate enhancers through motif enrichment analysis in identified DARs.
+4. Quantify the importance of both Transcription Factors and enhancer candidates for target genes and infer the direction of regulation (activating/repressing) using **linear correlations** of log2FC values from differential analysis across precursor states. .
+
 ### Challenges and Considerations
 Data resolution and quality: The integration of single-cell and bulk data requires careful consideration of data resolution and quality differences. Single-cell data provides high-resolution insights, but can be noisy, whereas bulk data offers a more stable signal, but at a lower resolution.
 
 ## Dataset 
-Public scRNA-Seq and bulk ATAC-seq data of B cell differentiation can be obtained from the European Genome-phenome Archive. 
-Human data for transcriptome (scRNA-Seq) in CD34+ B cell precursors: EGAS00001007305, 
+Human Cell Atlas for 8 scRNA-Seq samples of B-lymphoid cell states: https://explore.data.humancellatlas.org/projects/cc95ff89-2e68-4a08-a234-480eca21ce79
+Public bulk ATAC-seq data of B cell differentiation can be obtained from the European Genome-phenome Archive. 
 Human data for chromatin accessibility (ATAC-Seq) in B-cell precursors: HSC, CLP, pro-B, pre-B, Immature B: EGAD00001010908. 
 
 ## Workflow
