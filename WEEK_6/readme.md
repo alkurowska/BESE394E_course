@@ -354,18 +354,85 @@ findMotifsGenome.pl diff_peaks.txt mm10 ~/motifsFILE -size given -nomotif
 ```
 
 ### Integration
-`🟡🔵Integrated data`
-Transformation of `🔵scRNA-seq data` to investigate B-cell differentiation in integrative settings. 
+Integration strategy for `🔵scRNA-seq data` and `🟡ATAC data` to facilitate the identification of cell type-specific regulatory elements and their corresponding gene expression profiles throughout the B cell differentiation process. 
 Goals:
-1. Prepare aggregated `🔵scRNA-seq data` for pseudobulk differential expression analysis.
+1. **Correlation analysis** between gene expression levels from `🔵scRNA-seq data` and accessibility peaks from bulk `🟡ATAC data`.
+High correlation coefficients can suggest regulatory relationships where accessible chromatin regions potentially regulate the expression of nearby genes. 
+
+Goal: Understanding the `🟡🔵Integrated data`.
+
+
+Transformation of `🔵scRNA-seq data` to investigate B-cell differentiation in the setting of the `🟡🔵Integrated data`. 
+Goals:
+1. Prepare aggregated `🔵scRNA-seq data` for pseudobulk differential expression (DE) analysis.
 2. Utilize the DESeq2 tool to perform pseudobulk differential expression analysis on a specific cell type cluster.
 
-Integration strategy for `🔵scRNA-seq data` and `🟡ATAC data` to facilitate the identification of cell type-specific regulatory elements and their corresponding gene expression profiles. Goals:
-1. Correlation Analysis between gene expression levels from `🔵scRNA-seq data` and accessibility peaks from bulk `🟡ATAC data`. High correlation coefficients can suggest regulatory relationships where accessible chromatin regions potentially regulate the expression of nearby genes. 
+After identification of the cell type identities of the `🔵scRNA-seq data` clusters, we aim to perform differential expression analysis between conditions of specific cell types. It's crucial to recognize that single cells within a sample are not independent, as they are isolated from the same sample and the same environment. To infer which genes might be important for a condition at the population level (not at the individual level), it is necessary for our samples to be acquired from different organisms/samples, not different cells. To accomplish this, the current best practice involves utilizing a pseudobulk approach.
 
+#### 1. Pseudobulk
+```
+# Extracting necessary metrics for aggregation by cell type in a sample
+# First, it is useful to determine the number of clusters and the cluster names (cell types) present in our dataset:
 
+# Extract unique names of clusters (= levels of cluster_id factor variable)
+cluster_names <- levels(colData(sc_data)$cluster_id)
+cluster_names
 
+# Total number of clusters
+length(cluster_names)
 
+# Create a new column in colData for pseudobulk group assignment
+colData(sc_data)$pseudobulk_group <- NA
 
+# Assign cells to one of three pseudobulk samples within each cluster
+# For reproducibility
+for (cluster_name in cluster_names) {
+  cells_in_cluster <- which(colData(sc_data)$cluster_id == cluster_name)
+  # Randomly assign cells to one of three groups
+  colData(sc_data)$pseudobulk_group[cells_in_cluster] <- sample(1:3, length(cells_in_cluster), replace = TRUE)
+}
 
+# Subset metadata to include only the variables you want to aggregate across
+groups <- colData(sc_data)[, c("cluster_id"]
+head(groups)
 
+# Aggregate across cluster groups
+# transposing row/columns to have cell_ids as row names matching those of groups
+aggr_counts <- aggregate.Matrix(t(counts(sc_data)), 
+                                groupings = groups, fun = "sum") 
+
+# Explore output matrix
+class(aggr_counts)
+dim(aggr_counts)
+
+# Transpose aggregated matrix to have genes as rows and samples as columns
+aggr_counts <- t(aggr_counts)
+
+# Loop over all cell types to extract corresponding counts, and store information in a list
+
+## Initiate empty list
+counts_ls <- list()
+
+for (i in 1:length(cluster_names)) {
+
+  ## Extract indexes of columns in the global matrix that match a given cluster
+  column_idx <- which(colnames(aggr_counts) == cluster_names[i])
+  
+  ## Store corresponding sub-matrix as one element of a list
+  counts_ls[[i]] <- aggr_counts[, column_idx]
+  names(counts_ls)[i] <- cluster_names[i]
+
+}
+
+# Explore the different components of the list
+str(counts_ls)
+
+```
+
+#### 2. Differential expression with DESeq2
+```
+# Select cell type of interest
+cluster_names
+
+# Double-check that both lists have same names
+all(names(counts_ls) == names(metadata_ls))
