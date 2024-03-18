@@ -461,4 +461,19 @@ filtered_res <- res[!is.na(res$log2FoldChange) & !is.na(res$pvalue) &
                       res$padj < 0.05, ]
 
 filtered_res
+```
 
+#### 3. GRN Inference - correlation of pseudobulk `🔵scRNA-seq data` and bulk `🟡ATAC data`
+Goals:
+1. Correlate differential expressed genes and differential accessible chromatin regions across B cell transitions
+2. Identify enriched transcription factors (TFs).
+
+```
+# Example: Correlate differential gene expression with differential accessibility scores
+
+# Assuming `diffExprResults` and `diffAccResults` store differential expression and accessibility results, respectively
+cor_results <- cor(diffExprResults$logFC, diffAccResults$logFC)
+
+# Use correlation results along with TF motif enrichment to infer regulatory networks
+# This step is highly data-dependent and may involve additional bioinformatics tools and resources
+```
