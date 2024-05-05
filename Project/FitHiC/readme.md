@@ -59,7 +59,7 @@ Frequency of significant contacts filtered by the FDR < 0.05. We obtain a few hu
 
 
 ### 6. Ploting
-For the final detection of significant interactions, we filter the results based on the 0.90-quantile of contact Counts and an FDR < 0.001.
+For the final detection of significant interactions, we filter the results based on the 0.90-quantile of contact Counts and an FDR < 0.001. Then, significant interactions across biological replicates are merged by overlapping interactions.
 ```
 # Set a working directory
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
