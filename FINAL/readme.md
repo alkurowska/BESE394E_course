@@ -10,7 +10,7 @@ The organization of chromatin within the eukaryotic cell nucleus is a highly dyn
 Hi-C
   ├── Quality Control (FastQC version 0.12.1)
   ├── Trimming (fastp version 0.23.4)
-  ├── Hi-C Data Processing 
+  ├── Hi-C Data Pre-Processing  
   │   ├── Juicer version 1.6
   │     ├── Mapping (BWA version 0.7.17 or higher)
   │     ├── Detection of valid interaction products
@@ -24,6 +24,7 @@ Hi-C
   ├── Enrichment Analysis (topGO version 2.54.0)
   └── Vizualization (Juicebox version 2.3.0, HiContacts version 1.4.0)
 ```
+Quality Control and Hi-C Data Pre-Processing steps to generate final .hic or .mcool files of contact maps are performed in the nextflow pipeline [HiCFlow](https://github.com/Rohit-Satyam/HiCFlow/tree/main). Downstream Analysis Steps and Visualization are performed in R environment following the tutorials in this repository in order flexibly adjust the analysis based on the biological question and data type. 
 
 ### Case study
 ![picture alt](./content/imag/Graphical_abstract.png)
