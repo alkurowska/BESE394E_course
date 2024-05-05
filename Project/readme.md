@@ -26,7 +26,7 @@ Hi-C
 ```
 
 ### Case study
-![picture alt](./content/imag/Graphical_abstarct.png)
+![picture alt](./content/imag/Graphical_abstract.png)
 
 ## Background
 In this study, we focus on Hi-C application for understanding the nuclear architecture and gene regulation of the human malaria parasite, *Plasmodium falciparum*. The human infection starts when a female mosquito injects sporozoites into the host bloodstream during a blood meal. The injected sporozoites invade hepatocytes in the liver and undergo an extensive replication to release thousands of merozoites into the blood stream. The merozoites invade red blood cells where they begin a 48-hour replication cycle and develop asexually. During the 48-hour intra-erythrocytic developmental cycle (IDC) the parasite progresses through three distinct stages termed ring, trophozoite and schizont and later multiply into daughter cells by a process known as schizogony. These daughter parasites burst out of the host cell and invade new healthy erythrocytes [2]. 
