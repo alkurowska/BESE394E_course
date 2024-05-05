@@ -1,4 +1,4 @@
-# Hi-C 
+# multiHiCcompare 
 ### Hi-C differentially interacting regions (DIRs) 
 The joint normalization and removal of biases between multiple Hi-C datasets for comparative analysis and detection of differential chromatin interactions. 
 
@@ -7,7 +7,6 @@ The joint normalization and removal of biases between multiple Hi-C datasets for
 library(multiHiCcompare)
 library(strawr)
 library(edgeR)
-
 ```
 
 #### 2. Load the data
@@ -26,13 +25,11 @@ metadata$ID <- paste0(metadata$strain, "_", metadata$h.p.i, "h_rep", metadata$re
 
 # list of sampels to analyze
 samples <- rownames(metadata)
-
 ```
 
 #### 3. Extract Hi-C Raw Contact maps 
 ```
 # Chromosomes list 
-
 chr.list <- toupper(c("Pf3D7_01_v3","Pf3D7_02_v3","Pf3D7_03_v3","Pf3D7_04_v3","Pf3D7_05_v3","Pf3D7_06_v3","Pf3D7_07_v3","Pf3D7_08_v3","Pf3D7_09_v3","Pf3D7_10_v3","Pf3D7_11_v3","Pf3D7_12_v3","Pf3D7_13_v3","Pf3D7_14_v3"))
 
 inter.list <- list() #create a list of all interactions per chr per sample
@@ -52,18 +49,16 @@ for(i in 1:length(samples)){
     inter.list <- append(inter.list, hic.file) # append to the list
   }
 }
-
 ```
 #### 4. Differential Interacting Regions 
-In our dataset we have wild type (WT) and knockout (KO) samples. Each of the variants was sequenced in two biological replicates at two stages of parasite development: WT 16 h.p.i.; WT 40 h.p.i.; KO 16 h.p.i.; KO 40 h.p.i.
+In our dataset we have wild type (WT) and knockout (KO) samples. Each of the variants was sequenced in two biological replicates at two stages of parasite development: 16 and 40 hours post invasion (h.p.i.).
 
-### KO_16 vs WT_16
+##### KO_16 vs WT_16
 ```
 # Set a results directory 
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/multiHiCcompare/Results/KO_16_vs_WT_16")
 
-# all interactions per chr per samples
-
+# DIRs per chr per samples
 for(i in 1:length(chr.list)){
   # make groups & covariate input
   groups <- factor(metadata[metadata$group%in%c("KO_16", "WT_16"),]$strain)
@@ -118,18 +113,18 @@ for(i in 1:length(chr.list)){
 }
 
 ```
-### Results in chr11 in KO_16 vs WT_16 contrast 
-## Pre-normalization joint plots 
+##### Results for chr11 in KO_16 vs WT_16 contrast 
+##### Pre-normalization joint plots 
 ![picture alt](./content/imag/PF3D7_11_V3.png)
 
-## Post-normalization joint plots 
+##### Post-normalization joint plots 
 ![picture alt](./content/imag/PF3D7_11_V3_fastlo.png)
 
 As can be seen in the above MD plots (showing the log-fold change and unit distance between interaction frequencies), the data for each sample has been jointly normalized with all other samples using the Fast Loess (Fastlo) joint normalization algorithm. The implementation of fastlo is adapted to Hi-C data on a per-distance basis. To perform “fastlo” on Hi-C data we first split the data into p pooled matrices. The “progressive pooling” is used to split up the Hi-C matrix by unit distance such that distance 0 is its own pool, distances 1 and 2 are pooled, distance 3, 4, 5 are pooled, and so on until all unit distances belong to one of p pools. 
 
-## MD plots presenting significant DIRs
+##### MD plots presenting significant DIRs
 ![picture alt](./content/imag/PF3D7_11_V3_composite.png)
-The plot shows where any significant differences are detected between the two groups. 
+The plot shows where any significant differences (p.value < 0.05) are detected between the two groups. 
 
 #### 5. Ploting
 ```
@@ -138,17 +133,31 @@ library(HiContacts)
 library(dplyr)
 library(ggplot2)
 
+# Set a working directory
+setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
+
+# Chromosome list
+chr.list <- toupper(c("Pf3D7_01_v3","Pf3D7_02_v3","Pf3D7_03_v3","Pf3D7_04_v3","Pf3D7_05_v3","Pf3D7_06_v3","Pf3D7_07_v3","Pf3D7_08_v3","Pf3D7_09_v3","Pf3D7_10_v3","Pf3D7_11_v3","Pf3D7_12_v3","Pf3D7_13_v3","Pf3D7_14_v3"))
+
+# Import Hi-C contact matrices at 10k resolution
+hics <- list()
+for(i in 1:nrow(metadata)){
+  hic <- import(paste0(rownames(metadata)[i],"/inter_30.mcool"), resolution = 10000)
+  hics <- append(hics, hic)
+}
+names(hics) <- metadata$ID
+
 # Plot log scale KO_16 vs WT_16 for differential interactions for chr 11
 
+# Define a chromosome
 chr <- chr.list[11]
 
-# get differential results
-
+# Get differential results
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/multiHiCcompare/Results/KO_16_vs_WT_16")
 load(paste0(chr,".RData"))
 hic_table <- results
   
-# prepare data to plot
+# Prepare data to plot
 colnames(hic_table)[1:3] <- c("seqnames1", "start1", "start2")
 gis <- hic_table |> 
     mutate(
@@ -159,7 +168,7 @@ gis <- hic_table |>
     filter(abs(logFC) >= 0.58) |> # filter interactions with FC lower that |1.5| between the groups
     df2gi() 
 
-# extract hic matrix
+# Extract hic matrix
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
 merged_replicates <- list(
     KO_16h = merge(hics[["KO_16h_rep2"]][chr], hics[["KO_16h_rep1"]][chr]),
@@ -175,4 +184,4 @@ ggsave(plot = p, filename = paste0(chr, "_KO_16_vs_WT_16.png"), width = 8, heigh
 
 ```
 ![picture alt](./content/imag/PF3D7_11_V3_KO_16_vs_WT_16.png)
-Chromatin contact heatmap of chromosome 11 at 16 h.p.i. for the Δpfap2-p (KO) and control (WT) parasites, as well as the fold change in interactions (third panels from left) between Δpfap2-p and control parasites. Blue indicates a loss of interactions and red indicates an increase of interactions of Δpfap2-p over control (WT).
+The plot represents merged (by mean) Hi-C contacts of two biological replicates. Chromatin contact heatmap of chromosome 11 at 16 h.p.i. for the Δpfap2-p (KO) and control (WT) parasites, as well as the fold change in interactions (third panel from left) between Δpfap2-p and control parasites. Blue indicates a loss of interactions and red indicates an increase of interactions of Δpfap2-p over control (WT).

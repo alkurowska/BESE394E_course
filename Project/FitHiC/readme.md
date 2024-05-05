@@ -1,6 +1,6 @@
-# Hi-C 
+# Fit-Hi-C 
 ### Hi-C singificant interactions (loops)
-Assigning statistical confidence estimates to intra-chromosomal contact maps produced by genome-wide genome conformation capture assays. This is incredibly important because not all of the contacts seen in the Hi-C data are truly unexpected interactions. By assigning statistical confidence to each interaction, you will be able to determine which interactions are the most important and consequently, which ones warrant further investigation.
+Assigning statistical confidence estimates to intra-chromosomal contact maps produced by genome-wide genome conformation capture assays. This is incredibly important because not all of the contacts seen in the Hi-C data are truly unexpected interactions. By assigning statistical confidence to each interaction, we will be able to determine which interactions are the most important and consequently, which ones warrant further investigation.
 
 #### 1. Load libraries
 ```
@@ -10,7 +10,6 @@ library(dplyr)
 library(ggplot2)
 library(purrr)
 library(InteractionSet)
-
 ```
 
 #### 2. Prepare the data
@@ -27,12 +26,10 @@ metadata$ID <- paste0(metadata$strain, "_", metadata$h.p.i, "h_rep", metadata$re
 
 # list of sampels to analyze
 samples.id <- rownames(metadata)
-
 ```
 
 #### 3. Significant interactions
 Cross-linking and digestion from a Hi-C assay produces a genome-wide contact map. First, we extract intra-chromosomal contacts. We fit an initial spline (spline-1) using the observed contact counts and genomic distances between all possible mid-range locus pairs. The general shape of the spline is assumed to be due to random polymer looping and is the basis for the initial null model. This initial spline determines a threshold to identify outliers (red dots) which are excluded from the calculation of a refined null represented by a second spline (spline-2). For each mid-range locus pair, we estimate the prior contact probability from spline-2 using the exact genomic distance between the loci in the pair. We calculate P-values for all contacts, including null and outlier pairs, by using a binomial distribution and apply multiple hypothesis testing correction to compute a Q-value for each P-value.
-
 ```
 # Set a working directory
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/FitHiC/Input")
@@ -54,14 +51,15 @@ Contact probablity based on the observed interactions distribution across the ge
 
 ![picture alt](./content/imag/SRR19611538.KO_16h_rep2.spline_pass1.extractOutliers.png)
 
-Outlires marked in red - to be removed based on the initial fit. 
+Outliers marked in red - to be removed based on the initial fit. 
 
 ![picture alt](./content/imag/SRR19611538.KO_16h_rep2.spline_pass2.qplot.png)
 
-Frequency of significant contacts filtered by the fdr < 0.05. We obtain a few hundred thousands of significant contacts across all of the chromosomes.
+Frequency of significant contacts filtered by the FDR < 0.05. We obtain a few hundred thousands of significant contacts across all of the chromosomes.
 
 
-### 6. Ploting 
+### 6. Ploting
+For the final detection of significant interactions, we filter the results based on the 0.90-quantile of contact Counts and an FDR < 0.001.
 ```
 # Set a working directory
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
@@ -78,7 +76,6 @@ for(i in 1:nrow(metadata)){
 names(hics) <- metadata$ID
 
 # Get significant interactions info
-
 for(i in 1:nrow(metadata)){
   sample <- rownames(metadata)[i]
   setwd(paste0("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/FitHiC/Results/",sample))
@@ -142,7 +139,8 @@ setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_cours
 ggsave(plot = p, filename = "chr11_KO_16_vs_WT_16.png", width = 12, height = 8, dpi = 300, units = "in")
 
 ```
+#### Significant interactions in KO and WT samples at PF3D7_11_V3:100000-500000 locus
 ![picture alt](./content/imag/chr11_KO_16_vs_WT_16.png)
-We can observe a significant decrease of loops in a KO samples versus WT. Especially at the close proximity to the genomic locus of the Δpfap2-p gene. 
+The plot represents merged (by mean) Hi-C contacts of two biological replicates. We can observe a decrease of significant loops in KO sample versus WT. Especially at the close proximity to the genomic locus of the Δpfap2-p gene. 
 
 

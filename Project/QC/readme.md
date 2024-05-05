@@ -1,6 +1,6 @@
-# Hi-C 
+# QC 
 ### Hi-C quality evaluation 
-As data is processed using the Juicer pipeline, summary statistics are saved in the inter.txt and inter_30.txt files. This file provides a wide range of statistics. There are a few we would like to highlight as the most important for assessing an overall HiC data quality.
+As data is processed using the Juicer pipeline, summary statistics are saved in the inter.txt (for MAPQ > 0) and inter_30.txt (for MAPQ > 30) files. These file provide a wide range of statistics. There are a few that we would like to highlight as the most important for assessing an overall Hi-C data quality.
 
 #### 1. Load libraries
 ```
@@ -10,7 +10,6 @@ library(HiContacts)
 library(purrr)
 library(HiCExperiment)
 library(reshape2)
-
 ```
 
 #### 2. Load the data
@@ -18,7 +17,7 @@ library(reshape2)
 # Set a working directory
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
 
-# Prepare metadata file
+# Prepare a metadata file
 metadata <- as.data.frame(matrix(nrow = 8, ncol = 3))
 colnames(metadata) <- c("strain", "h.p.i", "replicate")
 rownames(metadata) <- list.files("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
@@ -27,15 +26,16 @@ metadata$h.p.i <- c(40, 40, 40, 40, 16, 16, 16, 16)
 metadata$replicate <- c(2, 1, 2, 1, 2, 1, 2, 1)
 metadata$ID <- paste0(metadata$strain, "_", metadata$h.p.i, "h_rep", metadata$replicate)
 
+# List of sampels to analyze
 samples <- rownames(metadata)
-
 ```
 
 #### 3. Plot the stats 
 
-## Valid Pairs 
-Valid Pairs constitue of Normal Reads and Chimeric Reads. In a successful HiC experiment we expect to align more than 80% of all reads into valid reads for HiC analysis. In Normal Reads, both paired end reads map uniquely to the reference genome. In Chimeric Reads, both 5’ ends of a paired end read map to uniquely different locations in the reference genome, but at least one read requires a split in the alignment. An indication that the read overlaps the re-ligation junction.
+##### Valid Pairs 
+Valid Pairs constitue of Normal Reads and Chimeric Reads. In a successful Hi-C experiment we expect to align more than 80% of all of the reads into valid reads for Hi-C analysis. In Normal Reads, both paired end reads map uniquely to the reference genome. In Chimeric Reads, both 5’ ends of a paired end read map to uniquely different locations in the reference genome, but at least one read requires a split in the alignment. An indication that the read overlaps the re-ligation junction. 
 ```
+# Retrieve the statistics 
 stats <- data.frame() #subset relevant statistics 
 for(i in 1:length(samples)){
   qc <- read.table(paste0(samples[i],"/qc.txt"), header = F, sep = "\t")
@@ -55,12 +55,15 @@ ggplot(stats, aes(fill=reads, y=sample, x=value)) +
 dev.off()
 ```
 ![picture alt](./content/imag/Sequenced_reads_stats.png)
-In our data, more than 80% of reads are either Normal or Chimeric in all of the samples, which indicates high quality of the data. 
+In our data, more than 80% of reads are either Normal or Chimeric in all of the samples, which indicates a high quality of the data. 
 
-## Unique Pairs  
+##### Unique Pairs  
 Within Valid Pairs we can distinguish those that map uniquely to the reference genome and those that are duplicated. The number of PCR duplicates is a function of the complexity of the library (how many unique molecules are estimated to be present in the amplified library) and the depth of sequencing. 
 ```
+# Set a working directory
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
+
+# Retrieve the statistics 
 stats <- data.frame() #subset relevant statistics 
 for(i in 1:length(samples)){
   qc <- read.table(paste0(samples[i],"/qc.txt"), header = F, sep = "\t")
@@ -82,10 +85,13 @@ dev.off()
 ![picture alt](./content/imag/Valid_pairs_stats.png)
 In our data, approx. 60% of reads out of all Valid Pairs are uniquely mapping to the reference genome.
 
-## Hi-C Contacts  
+##### Hi-C Contacts  
 Within Unique Pairs we can finally identify Hi-C Contacts. This statistic provides the total number of reads that contributed to the final contact matrix in the Juicer pipeline. Often these reads are referred to as the “usable” reads since they make up the final analysis .hic file which is used for the identification of loops, TADs and A/B compartments.
 ```
+# Set a working directory
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/hic-results")
+
+# Retrieve the statistics 
 stats <- data.frame() #subset relevant statistics 
 for(i in 1:length(samples)){
   qc <- read.table(paste0(samples[i],"/qc.txt"), header = F, sep = "\t")
@@ -105,7 +111,8 @@ ggplot(stats, aes(fill=reads, y=sample, x=value)) +
 dev.off()
 ```
 ![picture alt](./content/imag/Unique_pairs_stats.png)
-In our data Hi-C contacts are produced for approx. 50-60% of reads out of all Unique Pairs. The rest of the reads are excluded from final Hi-C matrix, i.e. reads with low quality (MAPQ < 30) as well as intra-fragment reads (occuring withing the same fragment).
+In our data all Unique Reads consist of approx. 50-60% true Hi-C contacts. The rest of the reads are excluded from final Hi-C matrix, i.e. reads with low quality (MAPQ < 30) as well as Intra-Fragment 
+Reads (occurring withing the same fragment).
 
 ### Hi-C reproducibility 
 Hi-C data analysis and interpretation are still in their early stages. In particular, there has been a lack of sound statistical metric to evaluate the quality of Hi-C data. When two or more biological replicates are available, it is a common practice to compute correlation coefficients between the two Hi-C data matrices and use them as a metric for quality control. We adopt a stratum-adjusted correlation coefficient (SCC) as the measurement of Hi-C data reproducibility. The value of SCC ranges from -1 to 1, and it can be used to compare the degrees of differences in reproducibility.
@@ -130,6 +137,7 @@ names(hics) <- metadata$ID
 #### 2. Compute stratum-adjusted correlations between Hi-C datasets. 
 “Stratum” refers to the distance from the main diagonal: with increase distance from the main diagonal, interactions of the DNA polymer are bound to decrease. Hicrep package computes a “per-stratum” correlation score and computes a weighted average correlation for entire chromosomes.
 ```
+# Calcualte SCC per sample per chromosome 
 for(k in 1:length(chr.list)){
   chr <- chr.list[k]
   sc <- data.frame(matrix(NA, ncol=8, nrow=8))
@@ -156,7 +164,7 @@ for(k in 1:length(chr.list)){
   write.table(new_results, sep = "\t", paste0(chr,"_scc.txt"))
 }
 
-# Find mean correlation value from all of the chromosomes
+# Find mean correlation value from all of the chromosomes in a sample
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/QC/Results")
 scc.final <- data.frame(matrix(NA, nrow = nrow(metadata)*nrow(metadata), ncol = length(chr.list)))
 colnames(scc.final) <- chr.list
@@ -185,5 +193,5 @@ ggplot(data, aes(x = sample1, y = sample2, fill = scc)) +
 dev.off()
 ```
 ![picture alt](./content/imag/Stratum_correlation.png)
-All biological replicates have the correlation coefficient > 90, except for WT samples at 16 h.p.i. with scc equal to ~ 85. 
+All biological replicates have the stratum correlation coefficient > 90, except for WT samples at 16 h.p.i. with SCC equal to ~ 85. 
 

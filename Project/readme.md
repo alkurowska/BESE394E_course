@@ -12,7 +12,7 @@ Hi-C
   ├── Trimming (fastp version 0.23.4)
   ├── Hi-C Data Processing 
   │   ├── Juicer version 1.6
-  │     ├── Mapping (BWA)
+  │     ├── Mapping (BWA version 0.7.17 or higher)
   │     ├── Detection of valid interaction products
   │     ├── Duplicates removal
   │     ├── Generate raw and normalized contact maps at various resolutions (KR)
@@ -22,7 +22,7 @@ Hi-C
   ├── Loops calling (FitHiC version 1.28)
   ├── Differential Interactions (multiHiCcompare version 1.20.0)
   ├── Enrichment Analysis (...)
-  └── Vizualization (Juicebox, HiContacts version 1.4.0)
+  └── Vizualization (Juicebox version 2.3.0, HiContacts version 1.4.0)
 ```
 
 ### Case study
@@ -32,7 +32,7 @@ Hi-C
 In this study, we focus on Hi-C application for understanding the nuclear architecture and gene regulation of the human malaria parasite, *Plasmodium falciparum*. The human infection starts when a female mosquito injects sporozoites into the host bloodstream during a blood meal. The injected sporozoites invade hepatocytes in the liver and undergo an extensive replication to release thousands of merozoites into the blood stream. The merozoites invade red blood cells where they begin a 48-hour replication cycle and develop asexually. During the 48-hour intra-erythrocytic developmental cycle (IDC) the parasite progresses through three distinct stages termed ring, trophozoite and schizont and later multiply into daughter cells by a process known as schizogony. These daughter parasites burst out of the host cell and invade new healthy erythrocytes [2]. 
 
 ## Biological Question
-Here, we specifically characterize a Plasmodium-specific Apicomplexan AP2 transcription factor (PfAP2-P) essential during processes of the parasite development [3]. We explore the effects of PfAP2-P deletion on chromatin structure by whole-genome chromosome conformation capture (Hi-C) of wild type (WT) and knockout strains at 16 and 40 hours post invasion, which represent the ring and trophozoite stages respectively.
+Here, we specifically characterize a Plasmodium-specific Apicomplexan AP2 transcription factor (PfAP2-P) essential during processes of the parasite development [3]. We explore the effects of PfAP2-P deletion on chromatin structure by whole-genome chromosome conformation capture (Hi-C) of wild type (WT) and knockout (KO) strains at 16 and 40 hours post invasion, which represent the ring and trophozoite stages respectively.
 
 ## Samples
 Hi-C data: ENA BioProject accession no. [PRJNA847684](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA847684). 
