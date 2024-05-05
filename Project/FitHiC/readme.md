@@ -48,13 +48,13 @@ for( i in 1:length(samples.id)){
 ```
 
 #### 5. Example of results for sample KO 16 h.p.i. rep2
-![picture alt](./content/imag/SRR19611534.KO_16h_rep2.fithic_pass1.png)
+![picture alt](./content/imag/SRR19611538.KO_16h_rep2.fithic_pass1.png)
 Contact probablity based on the observed interactions distribution across the genomic distance. Total of 18777475 interactions. Majority of them at the distance < 1000 kb.
 
-![picture alt](./content/imag/SRR19611534.KO_16h_rep2.spline_pass1.extractOutliers.png)
+![picture alt](./content/imag/SRR19611538.KO_16h_rep2.spline_pass1.extractOutliers.png)
 Outlires marked in red - to be removed based on the initial fit. 
 
-![picture alt](./content/imag/SRR19611534.KO_16h_rep2.spline_pass2.qplot.png)
+![picture alt](./content/imag/SRR19611538.KO_16h_rep2.spline_pass2.qplot.png)
 Frequency of significant contacts filtered by the fdr < 0.05. We obtain a few hundred thousands of significant contacts across all of the chromosomes.
 
 
