@@ -24,7 +24,7 @@ Hi-C
   ├── Enrichment Analysis (topGO version 2.54.0)
   └── Vizualization (Juicebox version 2.3.0, HiContacts version 1.4.0)
 ```
-Quality Control and Hi-C Data Pre-Processing steps to generate final .hic or .mcool files of contact maps are performed in the nextflow pipeline [HiCFlow](https://github.com/Rohit-Satyam/HiCFlow/tree/main). Downstream Analysis Steps and Visualization are performed in R environment following the tutorials in this repository in order flexibly adjust the analysis based on the biological question and data type. 
+Quality Control and Hi-C Data Pre-Processing steps to generate final .hic or .mcool files of contact maps are performed in the nextflow pipeline [HiCFlow](https://github.com/Rohit-Satyam/HiCFlow/tree/main). Downstream Analysis Steps and Visualization are performed in R environment following the tutorials in this repository in order to flexibly adjust the analysis based on the biological question and data type. 
 
 ### Case study
 ![picture alt](./content/imag/Graphical_abstract.png)
