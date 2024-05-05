@@ -140,12 +140,12 @@ ggsave(plot = p, filename = "chr11_KO_16_vs_WT_16.png", width = 12, height = 8, 
 
 ```
 #### Significant interactions in KO and WT samples at PF3D7_11_V3:100000-500000 locus
-### 16 h.p.i.
+##### 16 h.p.i.
 ![picture alt](./content/imag/chr11_KO_16_vs_WT_16.png)
 The plot represents merged (by mean) Hi-C contacts of two biological replicates. We can observe a decrease of significant loops in a KO sample versus WT. Especially at the close proximity to the genomic locus of the Δpfap2-p gene. 
 
 #### Significant interactions in KO and WT samples at PF3D7_11_V3:100000-500000 locus
-### 40 h.p.i.
+##### 40 h.p.i.
 ![picture alt](./content/imag/chr11_KO_40_vs_WT_40.png)
 The plot represents merged (by mean) Hi-C contacts of two biological replicates. We can observe that majority of significant loops is preserved in a KO sample as comparing to WT. Chromatin conformation is not affected much by the knockout of the gene during the second peak of expression, i.e. 40 h.p.i.
 
