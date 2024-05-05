@@ -21,7 +21,7 @@ Hi-C
   ├── TADs calling (TADCompare version 1.12.1)
   ├── Loops calling (FitHiC version 1.28)
   ├── Differential Interactions (multiHiCcompare version 1.20.0)
-  ├── Enrichment Analysis (...)
+  ├── Enrichment Analysis (topGO version 2.54.0)
   └── Vizualization (Juicebox version 2.3.0, HiContacts version 1.4.0)
 ```
 
