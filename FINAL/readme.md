@@ -8,9 +8,10 @@ The organization of chromatin within the eukaryotic cell nucleus is a highly dyn
 
 ### Steps for Hi-C data analysis
 1. Produce `.hic`  and `.mcool` files using our own [`HiCFlow`](https://github.com/Rohit-Satyam/HiCFlow/tree/main) Nextflow pipeline. The pipeline also provides the KR normalized per chromosome `*_eigen.txt` files. These can be used to visualize compartments in the data.
+Downstream Analysis Steps and Visualization are performed in R environment following the tutorials in this repository in order to flexibly adjust the analysis based on the biological question and data type. 
 2. The `.hic` files can be imported in R and [`TADCompare`](https://github.com/dozmorovlab/TADCompare) package can be used for differential TAD analysis
-3. Differential Loop Calling can be performed using [`FitHiC`](https://github.com/ay-lab/fithic)
-4. Downstream Analysis Steps and Visualization are performed in R environment following the tutorials in this repository in order to flexibly adjust the analysis based on the biological question and data type. 
+3. Significant Loop Calling can be performed using [`FitHiC`](https://github.com/ay-lab/fithic)
+4. Differential Interacting Regions can be performed using [`mutliHiCcompare`](https://github.com/dozmorovlab/multiHiCcompare)
 
 The Hi-C steps are shown below in a tree format:
 ```bash
@@ -25,10 +26,10 @@ Hi-C
   │     ├── Generate raw and normalized contact maps at various resolutions (KR)
   │     └── Compartments calling (Eigenvector)
   ├── Export to other contact maps formats (hic2cool version 0.8.3)
-  ├── TADs calling (TADCompare version 1.12.1)
-  ├── Loops calling (FitHiC version 1.28)
   ├── Differential Interactions (multiHiCcompare version 1.20.0)
+  ├── Loops calling (FitHiC version 1.28)
   ├── Enrichment Analysis (topGO version 2.54.0)
+  ├── TADs calling (TADCompare version 1.12.1)
   └── Vizualization (Juicebox version 2.3.0, HiContacts version 1.4.0)
 ```
 

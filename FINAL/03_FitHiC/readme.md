@@ -30,15 +30,24 @@ samples.id <- rownames(metadata)
 
 #### 3. Significant interactions
 Cross-linking and digestion from a Hi-C assay produces a genome-wide contact map. First, we extract intra-chromosomal contacts. We fit an initial spline (spline-1) using the observed contact counts and genomic distances between all possible mid-range locus pairs. The general shape of the spline is assumed to be due to random polymer looping and is the basis for the initial null model. This initial spline determines a threshold to identify outliers (red dots) which are excluded from the calculation of a refined null represented by a second spline (spline-2). For each mid-range locus pair, we estimate the prior contact probability from spline-2 using the exact genomic distance between the loci in the pair. We calculate P-values for all contacts, including null and outlier pairs, by using a binomial distribution and apply multiple hypothesis testing correction to compute a Q-value for each P-value.
+
+We are aiming to identify significant long-range interactions (>= 20 kb).
+
 ```
 # Set a working directory
 setwd("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/FitHiC/Input")
+
+# Set up a min distance between interacting regions 
+min.dist = 50000
+
+# Set up a max distance between interacting regions 
+max.dist = 5000000, 
 
 for( i in 1:length(samples.id)){
   fragsfile <- paste0("fragsfile.",samples.id[i],".bed.gz")
   intersfile <- paste0("intersfile.",samples.id[i],".bed.gz")
   outdir <- paste0("/Users/kurowsaa/OneDrive/Documents/KAUST/BESE394E_homework/BESE394E_course/FINAL/FitHiC/Results/",samples.id[i])
-  FitHiC(fragsfile, intersfile, outdir, distUpThres = 5000000, distLowThres = 50000,
+  FitHiC(fragsfile, intersfile, outdir, distUpThres = max.dist, distLowThres = min.dist,
          libname=paste0(samples.id[i],".",metadata$ID[i]), noOfBins=100,
          visual=TRUE)
 }
