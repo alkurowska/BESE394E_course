@@ -1,4 +1,5 @@
 # Hi-C 
+Aleksandra Kurowska, Anel Gonzalez, Rohit Satyam
 ### 3D chromatin conformation analysis 
 This repository provides a comprehensive Hi-C pipeline tailored for the analysis of *Plasmodium falciparum* genome.
 
