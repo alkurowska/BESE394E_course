@@ -1,0 +1,2 @@
+"chr1"	"start1"	"end1"	"chr2"	"start2"	"end2"	"D"	"logFC"	"logCPM"	"p.value"	"p.adj"
+"1"	"chr9"	1000000	1009999	"chr9"	1430000	1439999	43	-1.9069	9.5727	"2.4866E-06"	"2.5587E-03"
