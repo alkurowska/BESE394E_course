@@ -8,10 +8,11 @@ The organization of chromatin within the eukaryotic cell nucleus is a highly dyn
 
 ### Steps for Hi-C data analysis
 1. Produce `.hic`  and `.mcool` files using our own [`HiCFlow`](https://github.com/Rohit-Satyam/HiCFlow/tree/main) Nextflow pipeline. The pipeline also provides the KR normalized per chromosome `*_eigen.txt` files. These can be used to visualize compartments in the data.
-Downstream Analysis Steps and Visualization are performed in R environment following the tutorials in this repository in order to flexibly adjust the analysis based on the biological question and data type. 
 2. The `.hic` files can be imported in R and [`TADCompare`](https://github.com/dozmorovlab/TADCompare) package can be used for differential TAD analysis
 3. Significant Loop Calling can be performed using [`FitHiC`](https://github.com/ay-lab/fithic)
 4. Differential Interacting Regions can be performed using [`mutliHiCcompare`](https://github.com/dozmorovlab/multiHiCcompare)
+
+Downstream Analysis Steps and Visualization are performed in R environment following the tutorials in this repository in order to flexibly adjust the analysis based on the biological question and data type. 
 
 The Hi-C steps are shown below in a tree format:
 ```bash
