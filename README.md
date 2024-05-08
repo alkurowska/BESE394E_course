@@ -5,7 +5,7 @@
 |  Week      |    **Topic**     | **Assignments**                                                                                                              |
 |:----------:|:----------------:|------------------------------------------------------------------------------------------------------------------------------|
 | **WEEK_1** |     RNA-seq      | GSE198256 Differential Expression                                                                                            |
-| **WEEK_2** |     RNA-seq      | Differential Expression + Gene Set Analysis                                                                                  |
+| **WEEK_2** |     RNA-seq      | Differential Expression + Functional Analysis                                                                                |
 | **WEEK_3** |     ATAC-seq     | GSE79019 (Monocyte 3hs, 6hrs, 12hrs) Differential Accessibility                                                              |
 | **WEEK_4** |    scRNA-seq     | [SnakeMake Pipeline scRNA](https://github.com/alkurowska/dea_seurat_Group3) (Group3*)                                        |
 | **WEEK_5** |     Multiome     | scATAC + scRNA                                                                                                               |
